@@ -2,6 +2,7 @@ import { Play, Pause, Copy, Trash2, Sparkles, Search, Save, Loader2, X, Edit3, I
 import { useState, useEffect, useRef } from 'react';
 import { ActiveTicket, AppSettings, Ticket } from '@/types';
 import { cn } from '@/lib/utils';
+import { generateTicketStructure, searchSolutions } from '@/lib/gemini';
 
 interface TicketFormProps {
   ticket: ActiveTicket;
@@ -83,28 +84,28 @@ export function TicketForm({ ticket, onUpdate, onFinish, onDuplicate, onUpdateSe
   const handleFinalizeIA = async () => {
     if (!ticket.description.trim()) return;
     
+    if (!appSettings.geminiApiKey) {
+      alert("Por favor, configure sua chave da API Gemini nas Configurações primeiro.");
+      return;
+    }
+    
     setIsAiLoading(true);
     try {
       const selectedProcs = appSettings.procedures.filter(p => ticket.selectedProcedures?.includes(p.id));
       
-      const response = await fetch('/api/structure-ticket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          description: ticket.description,
-          procedures: selectedProcs.map(p => ({ name: p.name, description: p.description })),
-          problemSolved: ticket.problemSolved,
-          clientValidated: ticket.clientValidated,
-          isEscalated: ticket.isEscalated,
-          aiGuidelines: appSettings.aiGuidelines,
-          aiPromptStandard: appSettings.aiPromptStandard,
-          aiPromptEscalated: appSettings.aiPromptEscalated
-        })
+      const resultText = await generateTicketStructure(appSettings.geminiApiKey, { 
+        description: ticket.description,
+        procedures: selectedProcs.map(p => ({ name: p.name, description: p.description })),
+        problemSolved: ticket.problemSolved,
+        clientValidated: ticket.clientValidated,
+        isEscalated: ticket.isEscalated,
+        aiGuidelines: appSettings.aiGuidelines,
+        aiPromptStandard: appSettings.aiPromptStandard,
+        aiPromptEscalated: appSettings.aiPromptEscalated
       });
       
-      const data = await response.json();
-      if (data.result) {
-        let finalResult = data.result;
+      if (resultText) {
+        let finalResult = resultText;
         
         if (ticket.isEscalated && ticket.escalationContent) {
           finalResult = ticket.escalationContent + '\n\n' + finalResult;
@@ -118,6 +119,7 @@ export function TicketForm({ ticket, onUpdate, onFinish, onDuplicate, onUpdateSe
       }
     } catch (error) {
       console.error('Failed to structure ticket:', error);
+      alert("Erro ao estruturar chamado: " + (error as Error).message);
     } finally {
       setIsAiLoading(false);
     }
@@ -125,34 +127,34 @@ export function TicketForm({ ticket, onUpdate, onFinish, onDuplicate, onUpdateSe
 
   const handleSearchSolution = async () => {
     if (!ticket.description.trim()) return;
+
+    if (!appSettings.geminiApiKey) {
+      alert("Por favor, configure sua chave da API Gemini nas Configurações primeiro.");
+      return;
+    }
     
     setIsSearchingSolution(true);
     setSearchedSolution(null);
     setSelectedSolutionItem(null);
     try {
       const ticketsToSearch = finishedTickets.slice(0, 50);
-      const response = await fetch('/api/search-solutions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          description: ticket.description,
-          faqs: appSettings.faqs || [],
-          procedures: appSettings.procedures || [],
-          tickets: ticketsToSearch.map(t => ({
-            id: t.id,
-            description: t.description,
-            structuredResult: t.structuredResult,
-            category: t.category,
-            status: t.status
-          }))
-        })
+      const resultJson = await searchSolutions(appSettings.geminiApiKey, {
+        description: ticket.description,
+        faqs: appSettings.faqs || [],
+        procedures: appSettings.procedures || [],
+        tickets: ticketsToSearch.map(t => ({
+          id: t.id,
+          description: t.description,
+          structuredResult: t.structuredResult,
+          category: t.category,
+          status: t.status
+        }))
       });
       
-      const data = await response.json();
-      if (data.result) {
-        const faqsMatched = (appSettings.faqs || []).filter(f => (data.result.faqs || []).includes(f.id));
-        const proceduresMatched = (appSettings.procedures || []).filter(p => (data.result.procedures || []).includes(p.id));
-        const ticketsMatched = ticketsToSearch.filter(t => (data.result.tickets || []).includes(t.id));
+      if (resultJson) {
+        const faqsMatched = (appSettings.faqs || []).filter(f => (resultJson.faqs || []).includes(f.id));
+        const proceduresMatched = (appSettings.procedures || []).filter(p => (resultJson.procedures || []).includes(p.id));
+        const ticketsMatched = ticketsToSearch.filter(t => (resultJson.tickets || []).includes(t.id));
         
         setSearchedSolution({
           faqs: faqsMatched,
@@ -163,6 +165,7 @@ export function TicketForm({ ticket, onUpdate, onFinish, onDuplicate, onUpdateSe
       }
     } catch (error) {
       console.error('Failed to search solutions:', error);
+      alert("Erro ao buscar soluções: " + (error as Error).message);
     } finally {
       setIsSearchingSolution(false);
     }

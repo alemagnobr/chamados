@@ -91,5 +91,6 @@ export interface AppSettings {
   faqs?: FAQ[];
   systems?: string[];
   orientations?: Orientation[];
+  geminiApiKey?: string;
 }
 

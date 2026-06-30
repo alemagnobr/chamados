@@ -61,6 +61,7 @@ export function SettingsPanel({ appSettings, onUpdateSettings }: SettingsPanelPr
   const [localEscalationTemplate, setLocalEscalationTemplate] = useState(appSettings.escalationTemplate || '');
   const [localAiPromptStandard, setLocalAiPromptStandard] = useState(appSettings.aiPromptStandard || '');
   const [localAiPromptEscalated, setLocalAiPromptEscalated] = useState(appSettings.aiPromptEscalated || '');
+  const [localGeminiApiKey, setLocalGeminiApiKey] = useState(appSettings.geminiApiKey || '');
   
   const [newAiGuideline, setNewAiGuideline] = useState('');
   const [editingGuidelineIndex, setEditingGuidelineIndex] = useState<number | null>(null);
@@ -73,7 +74,12 @@ export function SettingsPanel({ appSettings, onUpdateSettings }: SettingsPanelPr
     setLocalEscalationTemplate(appSettings.escalationTemplate || '');
     setLocalAiPromptStandard(appSettings.aiPromptStandard || '');
     setLocalAiPromptEscalated(appSettings.aiPromptEscalated || '');
-  }, [appSettings.closingText, appSettings.escalationTemplate, appSettings.aiPromptStandard, appSettings.aiPromptEscalated]);
+    setLocalGeminiApiKey(appSettings.geminiApiKey || '');
+  }, [appSettings.closingText, appSettings.escalationTemplate, appSettings.aiPromptStandard, appSettings.aiPromptEscalated, appSettings.geminiApiKey]);
+
+  const handleSaveGeminiApiKey = () => {
+    onUpdateSettings({ ...appSettings, geminiApiKey: localGeminiApiKey });
+  };
 
   const handleSaveClosingText = () => {
     onUpdateSettings({ ...appSettings, closingText: localClosingText });
@@ -261,6 +267,34 @@ export function SettingsPanel({ appSettings, onUpdateSettings }: SettingsPanelPr
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm max-w-2xl mx-auto overflow-hidden">
+      <AccordionSection
+        title="Chave da API Gemini"
+        isExpanded={expandedSection === 'gemini'}
+        onToggle={() => toggleSection('gemini')}
+      >
+        <p className="text-sm text-slate-500 mb-6 mt-4">
+          Insira sua chave da API do Google Gemini para ativar as funcionalidades de Inteligência Artificial no sistema.
+        </p>
+
+        <div className="flex gap-2">
+          <input
+            type="password"
+            value={localGeminiApiKey}
+            onChange={(e) => setLocalGeminiApiKey(e.target.value)}
+            placeholder="AIzaSy..."
+            className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={handleSaveGeminiApiKey}
+            disabled={localGeminiApiKey === (appSettings.geminiApiKey || '')}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Check className="h-4 w-4" />
+            Salvar
+          </button>
+        </div>
+      </AccordionSection>
+
       <AccordionSection
         title="Configurações de SLA (em minutos)"
         isExpanded={expandedSection === 'sla'}
