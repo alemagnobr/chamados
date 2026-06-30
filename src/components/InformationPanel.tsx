@@ -1,0 +1,189 @@
+import { useState } from 'react';
+import { Plus, Trash2, Edit2, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { AppSettings, Information } from '@/types';
+
+interface InformationPanelProps {
+  appSettings: AppSettings;
+  onUpdateSettings: (settings: AppSettings) => void;
+}
+
+export function InformationPanel({ appSettings, onUpdateSettings }: InformationPanelProps) {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState<Omit<Information, 'id'>>({
+    title: '',
+    content: ''
+  });
+
+  const [expandedInformations, setExpandedInformations] = useState<Record<string, boolean>>({});
+
+  const handleOpenForm = (info?: Information) => {
+    if (info) {
+      setEditingId(info.id);
+      setFormData({
+        title: info.title || '',
+        content: info.content || ''
+      });
+    } else {
+      setEditingId(null);
+      setFormData({
+        title: '',
+        content: ''
+      });
+    }
+    setIsFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setEditingId(null);
+  };
+
+  const handleSave = () => {
+    if (!formData.title) return;
+
+    let newInformations = appSettings.informations || [];
+    if (editingId) {
+      newInformations = newInformations.map(i => i.id === editingId ? { ...formData, id: editingId } : i);
+    } else {
+      const newInformation: Information = { ...formData, id: Date.now().toString() };
+      newInformations = [...newInformations, newInformation];
+    }
+    
+    onUpdateSettings({ ...appSettings, informations: newInformations });
+    handleCloseForm();
+  };
+
+  const handleDelete = (id: string) => {
+    const newInformations = (appSettings.informations || []).filter(i => i.id !== id);
+    onUpdateSettings({ ...appSettings, informations: newInformations });
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedInformations(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const informations = appSettings.informations || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-slate-800">Informações</h2>
+          <p className="text-sm text-slate-500">Gerencie a base de conhecimento de informações.</p>
+        </div>
+        <button
+          onClick={() => handleOpenForm()}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Nova Informação
+        </button>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        {informations.length === 0 ? (
+          <div className="p-8 text-center text-slate-500">
+            Nenhuma informação cadastrada.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {informations.map((info, index) => (
+              <div key={info.id} className="p-4 hover:bg-slate-50 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded">#{index + 1}</span>
+                      <h3 className="font-bold text-slate-800 flex-1">{info.title}</h3>
+                    </div>
+                    
+                    <button 
+                      onClick={() => toggleExpand(info.id)}
+                      className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors mb-2"
+                    >
+                      {expandedInformations[info.id] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      Ver detalhes
+                    </button>
+                    
+                    {expandedInformations[info.id] && (
+                      <div className="mt-2 pl-6 border-l-2 border-slate-100 space-y-4">
+                        <div>
+                          <p className="text-sm text-slate-700 whitespace-pre-wrap">{info.content}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-2 ml-4">
+                    <button onClick={() => handleOpenForm(info)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button onClick={() => handleDelete(info.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {isFormOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-start justify-center p-4 sm:p-8 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full my-4 sm:my-8 relative">
+            <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white rounded-t-xl z-10">
+              <h2 className="text-xl font-bold text-slate-800">{editingId ? 'Editar Informação' : 'Novo registro'}</h2>
+              <button onClick={handleCloseForm} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Título <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full p-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Informação</label>
+                <textarea
+                  rows={8}
+                  value={formData.content}
+                  onChange={e => setFormData({ ...formData, content: e.target.value })}
+                  className="w-full p-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-200 bg-slate-50 rounded-b-xl">
+              <button 
+                onClick={handleCloseForm}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={!formData.title}
+                className="px-6 py-2.5 rounded-lg text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 transition-colors"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

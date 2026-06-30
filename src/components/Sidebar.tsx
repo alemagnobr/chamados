@@ -1,4 +1,4 @@
-import { Headset, HelpCircle, ListChecks, BookOpen, Monitor, Settings } from 'lucide-react';
+import { Headset, HelpCircle, ListChecks, BookOpen, Info, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
@@ -12,7 +12,7 @@ export function Sidebar({ activeItem = 'Atendimento', onNavigate }: SidebarProps
     { name: 'FAQs', icon: HelpCircle },
     { name: 'Orientações', icon: ListChecks },
     { name: 'Dúvidas Técnicas', icon: BookOpen },
-    { name: 'Sistemas Senado', icon: Monitor },
+    { name: 'Informações', icon: Info },
   ];
 
   return (

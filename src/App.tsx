@@ -7,6 +7,7 @@ import { TicketForm } from '@/components/TicketForm';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { FaqPanel } from '@/components/FaqPanel';
 import { ProcedurePanel } from '@/components/ProcedurePanel';
+import { InformationPanel } from '@/components/InformationPanel';
 import { Ticket, ActiveTicket, AppSettings } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -474,6 +475,8 @@ O texto é:
               <FaqPanel appSettings={appSettings} onUpdateSettings={handleUpdateSettings} tickets={tickets} />
             ) : activeSidebarItem === 'Orientações' ? (
               <ProcedurePanel appSettings={appSettings} onUpdateSettings={handleUpdateSettings} />
+            ) : activeSidebarItem === 'Informações' ? (
+              <InformationPanel appSettings={appSettings} onUpdateSettings={handleUpdateSettings} />
             ) : activeSidebarItem === 'Configurações' ? (
               <SettingsPanel appSettings={appSettings} onUpdateSettings={handleUpdateSettings} />
             ) : (

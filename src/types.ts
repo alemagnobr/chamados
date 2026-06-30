@@ -71,6 +71,12 @@ export interface FAQ {
   originalLink?: string;
 }
 
+export interface Information {
+  id: string;
+  title: string;
+  content: string;
+}
+
 export interface AppSettings {
   sla: {
     otima: number;
@@ -92,5 +98,6 @@ export interface AppSettings {
   systems?: string[];
   orientations?: Orientation[];
   geminiApiKey?: string;
+  informations?: Information[];
 }
 
