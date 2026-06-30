@@ -125,6 +125,11 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
                       {ticket.category}
                     </span>
                   )}
+                  {ticket.isEscalated && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold">
+                      ESCALONADO
+                    </span>
+                  )}
                   <span className="text-sm font-bold text-slate-600 flex items-center gap-1">
                     {formatDuration(ticket.durationSeconds)}
                   </span>
@@ -186,7 +191,14 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
           <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">Chamado {viewingTicket.id}</h2>
+                <div className="flex items-center gap-3 mb-1">
+                  <h2 className="text-xl font-bold text-slate-800">Chamado {viewingTicket.id}</h2>
+                  {viewingTicket.isEscalated && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold">
+                      ESCALONADO
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-slate-500">Finalizado em {viewingTicket.finishedAt ? formatDateStr(viewingTicket.finishedAt) : '-'}</p>
               </div>
               <button 
