@@ -89,6 +89,7 @@ O texto é:
     closingText: defaultClosingText,
     categories: defaultCategories,
     procedures: defaultProcedures,
+    orientations: [],
     predefinedSolutions: [],
     escalationTemplate: defaultEscalationTemplate,
     aiGuidelines: [],
