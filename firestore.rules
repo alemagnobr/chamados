@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Core helpers
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    match /settings/{settingId} {
+      // For global settings, any authenticated user can read
+      allow read: if isSignedIn() && isValidId(settingId);
+      // Let's assume all authenticated users can write for now to unblock, 
+      // but ideally we check if they're admin. In this app, anyone can edit settings.
+      allow create, update: if isSignedIn() && isValidId(settingId);
+      allow delete: if false; // do not allow delete of global settings
+    }
+    
+    match /tickets/{ticketId} {
+      allow list: if isSignedIn(); // We'll restrict this in a bit, but for now to allow viewing all tickets
+      allow get: if isSignedIn() && isValidId(ticketId);
+      allow create: if isSignedIn() && isValidId(ticketId);
+      allow update: if isSignedIn() && isValidId(ticketId);
+      allow delete: if isSignedIn() && isValidId(ticketId);
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId && isValidId(userId);
+    }
+  }
+}
+

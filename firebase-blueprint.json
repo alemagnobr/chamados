@@ -1,0 +1,58 @@
+{
+  "projectConfig": {
+    "projectName": "Helpdesk",
+    "requireAuthentication": true
+  },
+  "databaseSchema": {
+    "collections": {
+      "users": {
+        "description": "User profiles.",
+        "fields": {
+          "email": "string",
+          "displayName": "string",
+          "createdAt": "timestamp"
+        },
+        "securityRules": {
+          "read": "request.auth != null && request.auth.uid == resource.id",
+          "write": "request.auth != null && request.auth.uid == request.resource.id"
+        }
+      },
+      "settings": {
+        "description": "Global application settings (e.g. SLA, procedures).",
+        "fields": {
+          "sla": "map",
+          "procedures": "array"
+        },
+        "securityRules": {
+          "read": "request.auth != null",
+          "write": "request.auth != null"
+        }
+      },
+      "tickets": {
+        "description": "Support tickets created by users.",
+        "fields": {
+          "id": "string",
+          "createdAt": "timestamp",
+          "loginRede": "string",
+          "ramal": "string",
+          "celular": "string",
+          "endLogicoMicro": "string",
+          "endLogicoImpressora": "string",
+          "endLogicoMonitor": "string",
+          "categoria": "string",
+          "description": "string",
+          "selectedProcedures": "array",
+          "problemSolved": "boolean",
+          "clientValidated": "boolean",
+          "status": "string",
+          "userId": "string",
+          "authorName": "string"
+        },
+        "securityRules": {
+          "read": "request.auth != null",
+          "write": "request.auth != null"
+        }
+      }
+    }
+  }
+}

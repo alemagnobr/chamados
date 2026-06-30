@@ -1,0 +1,8 @@
+{
+  "name": "Central de Suporte",
+  "description": "Sistema de registro e controle de chamados, SLA, FAQs e procedimentos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
