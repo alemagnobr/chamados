@@ -1,6 +1,7 @@
 import { Eye, Edit, Trash2, Search as SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { isToday, isThisWeek, isThisMonth } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Ticket, AppSettings } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -70,12 +71,114 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
     return true;
   });
 
+  // Dashboard Metrics Calculation
+  const finishedFilteredTickets = filteredTickets.filter(t => t.status === 'FINALIZADO');
+  
+  const buckets = [
+    { name: 'Até 3 min', max: 3 * 60, count: 0 },
+    { name: 'Até 5 min', max: 5 * 60, count: 0 },
+    { name: 'Até 10 min', max: 10 * 60, count: 0 },
+    { name: 'Até 15 min', max: 15 * 60, count: 0 },
+    { name: 'Até 20 min', max: 20 * 60, count: 0 },
+    { name: 'Até 30 min', max: 30 * 60, count: 0 },
+    { name: 'Mais de 30 min', max: Infinity, count: 0 },
+  ];
+
+  finishedFilteredTickets.forEach(ticket => {
+    for (const bucket of buckets) {
+      if (ticket.durationSeconds <= bucket.max) {
+        bucket.count++;
+        break;
+      }
+    }
+  });
+
+  const totalSeconds = finishedFilteredTickets.reduce((acc, t) => acc + t.durationSeconds, 0);
+  const avgSeconds = finishedFilteredTickets.length > 0 ? totalSeconds / finishedFilteredTickets.length : 0;
+  const avgMinutes = avgSeconds / 60;
+
+  let slaStatus = 'Sem dados';
+  let slaColor = 'bg-slate-200';
+  let slaTextColor = 'text-slate-500';
+
+  if (finishedFilteredTickets.length > 0) {
+    if (avgMinutes <= appSettings.sla.otima) {
+      slaStatus = 'Ótima';
+      slaColor = 'bg-emerald-500';
+      slaTextColor = 'text-emerald-700';
+    } else if (avgMinutes <= appSettings.sla.boa) {
+      slaStatus = 'Boa';
+      slaColor = 'bg-blue-500';
+      slaTextColor = 'text-blue-700';
+    } else if (avgMinutes <= appSettings.sla.atencao) {
+      slaStatus = 'Atenção';
+      slaColor = 'bg-amber-500';
+      slaTextColor = 'text-amber-700';
+    } else if (avgMinutes <= appSettings.sla.ruim) {
+      slaStatus = 'Ruim';
+      slaColor = 'bg-orange-500';
+      slaTextColor = 'text-orange-700';
+    } else {
+      slaStatus = 'Crítica';
+      slaColor = 'bg-red-500';
+      slaTextColor = 'text-red-700';
+    }
+  }
+
+  const formatAvg = (secs: number) => {
+    if (secs === 0) return '00:00';
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = Math.floor(secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   return (
-    <div className="mt-8">
-      <div className="flex flex-col gap-4 mb-4">
-        <h3 className="font-bold text-slate-800">Últimos chamados registrados</h3>
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="flex-1 relative">
+    <div className="space-y-8 mt-8">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h3 className="font-bold text-slate-800">Tempo de finalização de chamados</h3>
+            <p className="text-xs text-slate-400 mt-1">{finishedFilteredTickets.length} chamado(s) finalizado(s) no período</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg border border-slate-100">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SLA Médio</span>
+                <span className={cn("text-sm font-bold", slaTextColor)}>{formatAvg(avgSeconds)}</span>
+              </div>
+              <div className="h-8 w-px bg-slate-200"></div>
+              <div className="flex items-center gap-2">
+                <div className={cn("h-2.5 w-2.5 rounded-full", slaColor)}></div>
+                <span className={cn("text-sm font-bold", slaTextColor)}>{slaStatus}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {finishedFilteredTickets.length > 0 && (
+          <div className="h-64 mt-6 px-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={buckets} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
+                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                <Tooltip 
+                  cursor={{ fill: '#f1f5f9' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={80} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex flex-col gap-4 mb-4">
+          <h3 className="font-bold text-slate-800">Últimos chamados registrados</h3>
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex-1 relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input 
               type="text" 
@@ -130,9 +233,32 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
                       ESCALONADO
                     </span>
                   )}
-                  <span className="text-sm font-bold text-slate-600 flex items-center gap-1">
-                    {formatDuration(ticket.durationSeconds)}
-                  </span>
+                  {ticket.status === 'FINALIZADO' ? (
+                    <div className="flex items-center gap-2 group">
+                      <span className="text-sm font-bold text-slate-600 flex items-center gap-1">
+                        {formatDuration(ticket.durationSeconds)}
+                      </span>
+                      {onUpdate && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingTicket(ticket);
+                            setEditMinutes(Math.floor(ticket.durationSeconds / 60).toString());
+                            setEditSeconds((ticket.durationSeconds % 60).toString());
+                            setIsEditingTime(true);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                          title="Editar tempo"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm font-bold text-slate-600 flex items-center gap-1">
+                      {formatDuration(ticket.durationSeconds)}
+                    </span>
+                  )}
                 </div>
                 
                 <h4 className="text-sm font-medium text-slate-900">
@@ -333,6 +459,7 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

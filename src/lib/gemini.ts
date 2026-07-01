@@ -9,7 +9,7 @@ export const generateTicketStructure = async (
   data: any
 ) => {
   const ai = new GoogleGenAI({ apiKey });
-  const { description, procedures, problemSolved, clientValidated, isEscalated, aiGuidelines, aiPromptStandard, aiPromptEscalated } = data;
+  const { description, procedures, verifications, problemSolved, clientValidated, isEscalated, aiGuidelines, aiPromptStandard, aiPromptEscalated } = data;
 
   let prompt = '';
   
@@ -23,7 +23,11 @@ export const generateTicketStructure = async (
     let proceduresContext = '';
     if (procedures && procedures.length > 0) {
       const proceduresList = procedures.map((p: any) => `- ${p.name}: ${p.description}`).join('\n');
-      proceduresContext = `\nAlém disso, os seguintes procedimentos foram executados, mas o incidente persiste:\n${proceduresList}\nInclua menção a esses procedimentos executados na sua frase.`;
+      proceduresContext += `\nAlém disso, os seguintes procedimentos foram executados, mas o incidente persiste:\n${proceduresList}\nInclua menção a esses procedimentos executados na sua frase.`;
+    }
+    if (verifications && verifications.length > 0) {
+      const verificationsList = verifications.map((v: any) => `- ${v.name}: ${v.description}`).join('\n');
+      proceduresContext += `\nTambém foram realizadas as seguintes verificações:\n${verificationsList}\nInclua menção a essas verificações na sua frase.`;
     }
 
     let basePrompt = aiPromptEscalated || `Você é um assistente técnico de TI. 
@@ -46,23 +50,32 @@ O texto é:
     let proceduresContext = '';
     if (procedures && procedures.length > 0) {
       const proceduresList = procedures.map((p: any) => `- ${p.name}: ${p.description}`).join('\n');
-      proceduresContext = `\nAlém disso, considere que os seguintes procedimentos TÉCNICOS também foram executados com sucesso:\n${proceduresList}\nInclua menção direta a esses procedimentos na seção Tratativa/Solução, de forma técnica.`;
+      proceduresContext += `\nAlém disso, considere que os seguintes procedimentos TÉCNICOS também foram executados com sucesso:\n${proceduresList}\nInclua menção direta a esses procedimentos na seção "Ações realizadas", de forma técnica.`;
+    }
+    if (verifications && verifications.length > 0) {
+      const verificationsList = verifications.map((v: any) => `- ${v.name}: ${v.description}`).join('\n');
+      proceduresContext += `\nTambém foram realizadas as seguintes verificações com sucesso:\n${verificationsList}\nInclua menção a essas verificações na seção "Ações realizadas", de forma técnica.`;
     }
 
     let validationContext = '';
-    if (!isEscalated && (problemSolved !== undefined || clientValidated !== undefined)) {
-      const solvedText = problemSolved 
-        ? 'Após os procedimentos, o problema foi solucionado!' 
-        : 'Após os procedimentos, o problema não foi solucionado.';
-      const validatedText = clientValidated 
-        ? 'Cliente validou o chamado!' 
-        : 'Cliente não validou o chamado.';
-      validationContext = `\n\nNo final da sua resposta, adicione OBRIGATORIAMENTE as seguintes duas frases em linhas separadas:\n${solvedText}\n${validatedText}`;
+    if (!isEscalated) {
+      let sentences = [];
+      if (problemSolved) {
+        sentences.push('Após os procedimentos, o problema foi solucionado!');
+      }
+      
+      if (clientValidated !== undefined) {
+        sentences.push(clientValidated ? 'Cliente validou o chamado!' : 'Cliente não validou o chamado.');
+      }
+      
+      if (sentences.length > 0) {
+        validationContext = `\n\nNo final da sua resposta, adicione OBRIGATORIAMENTE as seguintes frases em linhas separadas no Resultado:\n${sentences.join('\n')}`;
+      }
     }
 
     let basePrompt = aiPromptStandard || `Você é um assistente técnico de TI. 
 Eu vou te enviar um texto relatando um problema ou atendimento de suporte.
-Sua tarefa é reestruturar esse texto em dois tópicos: "Demanda" e "Tratativa/Solução".
+Sua tarefa é reestruturar esse texto nos tópicos: "Análise técnica", "Ações realizadas" e "Resultado".
 Corrija erros ortográficos e use linguagem profissional e técnica.
 NÃO invente procedimentos ou informações que não estão no texto original nem na lista de procedimentos executados.
 NÃO "encha linguiça" ou adicione detalhes não mencionados.{proceduresContext}{validationContext}{guidelinesContext}
@@ -71,9 +84,16 @@ O texto é:
 "{description}"
 
 Formate a saída EXATAMENTE assim:
-Demanda: [texto da demanda]
+Análise técnica:
+[Análise técnica do que o cliente informou]
 
-Tratativa/Solução: [texto da tratativa/solução]`;
+Ações realizadas:
+• [ação 1]
+• [ação 2]
+(Liste todas as ações tomadas em bullet points)
+
+Resultado:
+[Resultado final após as ações]`;
 
     prompt = basePrompt
       .replace('{description}', description)

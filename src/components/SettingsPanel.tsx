@@ -51,6 +51,12 @@ export function SettingsPanel({ appSettings, onUpdateSettings }: SettingsPanelPr
   const [editingProcedureName, setEditingProcedureName] = useState('');
   const [editingProcedureDesc, setEditingProcedureDesc] = useState('');
 
+  const [newVerificationName, setNewVerificationName] = useState('');
+  const [newVerificationDesc, setNewVerificationDesc] = useState('');
+  const [editingVerificationId, setEditingVerificationId] = useState<string | null>(null);
+  const [editingVerificationName, setEditingVerificationName] = useState('');
+  const [editingVerificationDesc, setEditingVerificationDesc] = useState('');
+
   const [newPredefinedTitle, setNewPredefinedTitle] = useState('');
   const [newPredefinedContent, setNewPredefinedContent] = useState('');
   const [editingPredefinedId, setEditingPredefinedId] = useState<string | null>(null);
@@ -207,6 +213,57 @@ export function SettingsPanel({ appSettings, onUpdateSettings }: SettingsPanelPr
         )
       });
       cancelEditingProcedure();
+    }
+  };
+
+  const handleAddVerification = () => {
+    if (newVerificationName.trim() && newVerificationDesc.trim()) {
+      onUpdateSettings({
+        ...appSettings,
+        verifications: [
+          ...(appSettings.verifications || []),
+          {
+            id: Date.now().toString(),
+            name: newVerificationName.trim(),
+            description: newVerificationDesc.trim()
+          }
+        ]
+      });
+      setNewVerificationName('');
+      setNewVerificationDesc('');
+    }
+  };
+
+  const handleRemoveVerification = (id: string) => {
+    onUpdateSettings({
+      ...appSettings,
+      verifications: (appSettings.verifications || []).filter(v => v.id !== id)
+    });
+  };
+
+  const startEditingVerification = (verif: { id: string, name: string, description: string }) => {
+    setEditingVerificationId(verif.id);
+    setEditingVerificationName(verif.name);
+    setEditingVerificationDesc(verif.description);
+  };
+
+  const cancelEditingVerification = () => {
+    setEditingVerificationId(null);
+    setEditingVerificationName('');
+    setEditingVerificationDesc('');
+  };
+
+  const saveEditedVerification = () => {
+    if (editingVerificationName.trim() && editingVerificationDesc.trim() && editingVerificationId) {
+      onUpdateSettings({
+        ...appSettings,
+        verifications: (appSettings.verifications || []).map(v => 
+          v.id === editingVerificationId 
+            ? { ...v, name: editingVerificationName.trim(), description: editingVerificationDesc.trim() }
+            : v
+        )
+      });
+      cancelEditingVerification();
     }
   };
 
@@ -745,6 +802,107 @@ export function SettingsPanel({ appSettings, onUpdateSettings }: SettingsPanelPr
           ))}
           {appSettings.procedures.length === 0 && (
             <p className="text-sm text-slate-400 italic">Nenhum procedimento cadastrado.</p>
+          )}
+        </div>
+      </AccordionSection>
+      
+      <AccordionSection
+        title="Verificações"
+        isExpanded={expandedSection === 'verifications'}
+        onToggle={() => toggleSection('verifications')}
+      >
+        <p className="text-sm text-slate-500 mb-6 mt-4">
+          Cadastre as verificações que podem ser marcadas durante os chamados (ex: Verificado cabos, Ping OK).
+        </p>
+
+        <div className="flex gap-2 mb-6 flex-col">
+          <input
+            type="text"
+            value={newVerificationName}
+            onChange={(e) => setNewVerificationName(e.target.value)}
+            placeholder="Nome da Verificação (ex: Ping no Servidor)"
+            className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newVerificationDesc}
+              onChange={(e) => setNewVerificationDesc(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddVerification()}
+              placeholder="Descrição do que foi verificado..."
+              className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={handleAddVerification}
+              disabled={!newVerificationName.trim() || !newVerificationDesc.trim()}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="h-4 w-4" />
+              Adicionar
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {(appSettings.verifications || []).map((verif) => (
+            <div key={verif.id} className="flex items-start justify-between p-4 bg-slate-50 border border-slate-100 rounded-lg">
+              {editingVerificationId === verif.id ? (
+                <div className="w-full flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={editingVerificationName}
+                    onChange={(e) => setEditingVerificationName(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm text-slate-700 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editingVerificationDesc}
+                      onChange={(e) => setEditingVerificationDesc(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && saveEditedVerification()}
+                      className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button 
+                      onClick={saveEditedVerification}
+                      disabled={!editingVerificationName.trim() || !editingVerificationDesc.trim()}
+                      className="p-1.5 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={cancelEditingVerification}
+                      className="p-1.5 bg-slate-200 text-slate-600 rounded hover:bg-slate-300 transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <div className="font-bold text-slate-700 font-mono text-sm">{verif.name}</div>
+                    <div className="text-xs text-slate-500 mt-1">{verif.description}</div>
+                  </div>
+                  <div className="flex items-center gap-1 ml-4">
+                    <button 
+                      onClick={() => startEditingVerification(verif)}
+                      className="text-slate-400 hover:text-blue-500 transition-colors p-1"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleRemoveVerification(verif.id)}
+                      className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+          {(appSettings.verifications || []).length === 0 && (
+            <p className="text-sm text-slate-400 italic">Nenhuma verificação cadastrada.</p>
           )}
         </div>
       </AccordionSection>

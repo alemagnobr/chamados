@@ -91,11 +91,13 @@ export function TicketForm({ ticket, onUpdate, onFinish, onDuplicate, onUpdateSe
     
     setIsAiLoading(true);
     try {
-      const selectedProcs = appSettings.procedures.filter(p => ticket.selectedProcedures?.includes(p.id));
+      const selectedProcs = appSettings.procedures?.filter(p => ticket.selectedProcedures?.includes(p.id)) || [];
+      const selectedVerifs = appSettings.verifications?.filter(v => ticket.selectedVerifications?.includes(v.id)) || [];
       
       const resultText = await generateTicketStructure(appSettings.geminiApiKey, { 
         description: ticket.description,
         procedures: selectedProcs.map(p => ({ name: p.name, description: p.description })),
+        verifications: selectedVerifs.map(v => ({ name: v.name, description: v.description })),
         problemSolved: ticket.problemSolved,
         clientValidated: ticket.clientValidated,
         isEscalated: ticket.isEscalated,
@@ -688,6 +690,54 @@ export function TicketForm({ ticket, onUpdate, onFinish, onDuplicate, onUpdateSe
                         <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                           {proc.description}
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {appSettings.verifications && appSettings.verifications.length > 0 && (
+            <div className="mb-6 p-4 bg-slate-50 border border-slate-100 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-bold text-slate-800">Verificações</h3>
+                <button
+                  onClick={() => onNavigate && onNavigate('Configurações')}
+                  className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  title="Cadastrar outra verificação em Configurações"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Cadastrar verificação
+                </button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {appSettings.verifications.map(verif => {
+                  const isChecked = ticket.selectedVerifications?.includes(verif.id) || false;
+                  return (
+                    <div key={verif.id} className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id={`verif-${verif.id}`}
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const current = ticket.selectedVerifications || [];
+                          const updated = e.target.checked 
+                            ? [...current, verif.id]
+                            : current.filter(id => id !== verif.id);
+                          handleChange('selectedVerifications', updated);
+                        }}
+                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                      />
+                      <label htmlFor={`verif-${verif.id}`} className="text-sm text-slate-700 font-medium cursor-pointer flex-1">
+                        {verif.name}
+                      </label>
+                      <div className="group relative">
+                        <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          {verif.description}
                           <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
                         </div>
                       </div>

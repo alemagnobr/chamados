@@ -18,6 +18,7 @@ export interface Ticket {
   structuredResult?: string;
   isPaused?: boolean;
   selectedProcedures?: string[];
+  selectedVerifications?: string[];
   problemSolved?: boolean;
   clientValidated?: boolean;
   isEscalated?: boolean;
@@ -40,6 +41,12 @@ export interface Procedure {
   description: string;
   steps?: string;
   category?: string;
+}
+
+export interface Verification {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export interface Orientation {
@@ -77,6 +84,12 @@ export interface Information {
   content: string;
 }
 
+export interface Shortcut {
+  id: string;
+  title: string;
+  url: string;
+}
+
 export interface AppSettings {
   sla: {
     otima: number;
@@ -89,6 +102,7 @@ export interface AppSettings {
   closingText: string;
   categories: string[];
   procedures: Procedure[];
+  verifications?: Verification[];
   predefinedSolutions: PredefinedSolution[];
   escalationTemplate: string;
   aiGuidelines: string[];
@@ -99,5 +113,6 @@ export interface AppSettings {
   orientations?: Orientation[];
   geminiApiKey?: string;
   informations?: Information[];
+  shortcuts?: Shortcut[];
 }
 

@@ -1,7 +1,6 @@
 import { useState, MouseEvent, useEffect, useRef } from 'react';
 import { Plus, Layout, LogOut } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
-import { Dashboard } from '@/components/Dashboard';
 import { TicketList } from '@/components/TicketList';
 import { TicketForm } from '@/components/TicketForm';
 import { SettingsPanel } from '@/components/SettingsPanel';
@@ -316,6 +315,8 @@ O texto é:
       <Sidebar 
         activeItem={activeSidebarItem}
         onNavigate={setActiveSidebarItem}
+        appSettings={appSettings}
+        onUpdateSettings={handleUpdateSettings}
       />
       
       <main className="flex-1 ml-64 flex flex-col min-w-0">
@@ -443,7 +444,6 @@ O texto é:
                       </div>
                     )}
                     
-                    <Dashboard tickets={tickets} appSettings={appSettings} />
                     <TicketList tickets={tickets} appSettings={appSettings} onDelete={handleDeleteTicket} onEdit={handleEditTicket} onUpdate={handleUpdateTicket} />
                   </>
                 )
@@ -464,7 +464,6 @@ O texto é:
                     <div className="mt-12 pt-12 border-t border-slate-200">
                       <h3 className="text-xl font-bold text-slate-800 mb-8">Dashboard e Histórico</h3>
                       <div className="space-y-8">
-                        <Dashboard tickets={tickets} appSettings={appSettings} />
                         <TicketList tickets={tickets} appSettings={appSettings} onDelete={handleDeleteTicket} onEdit={handleEditTicket} onUpdate={handleUpdateTicket} />
                       </div>
                     </div>
