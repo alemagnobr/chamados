@@ -268,7 +268,21 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
                   )}>
                     {ticket.status === 'FINALIZADO' ? 'FINALIZADO' : 'EM ANDAMENTO'}
                   </span>
-                  {ticket.category && (
+                  {onUpdate ? (
+                    <select
+                      value={ticket.category || ''}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        onUpdate({ ...ticket, category: e.target.value });
+                      }}
+                      className="px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold outline-none cursor-pointer hover:bg-indigo-100 transition-colors"
+                    >
+                      <option value="">Sem categoria</option>
+                      {appSettings.categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  ) : ticket.category && (
                     <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold">
                       {ticket.category}
                     </span>
