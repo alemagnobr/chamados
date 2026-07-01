@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Headset, HelpCircle, ListChecks, BookOpen, Info, Settings, Plus, ExternalLink, X, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Headset, HelpCircle, ListChecks, BookOpen, Info, Settings, Plus, ExternalLink, X, Trash2, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppSettings, Shortcut } from '@/types';
 
@@ -17,6 +17,7 @@ export function Sidebar({ activeItem = 'Atendimento', onNavigate, appSettings, o
 
   const menuItems = [
     { name: 'Atendimento', icon: Headset },
+    { name: 'SLA', icon: Activity },
     { name: 'FAQs', icon: HelpCircle },
     { name: 'Orientações', icon: ListChecks },
     { name: 'Dúvidas Técnicas', icon: BookOpen },
@@ -100,7 +101,7 @@ export function Sidebar({ activeItem = 'Atendimento', onNavigate, appSettings, o
         </div>
         <div className="px-2 space-y-1">
           {shortcuts.length === 0 ? (
-            <div className="px-2 py-2 text-sm text-slate-500">
+            <div className="px-2 py-2 text-xs text-slate-500">
               Nenhum atalho ainda
             </div>
           ) : (
@@ -110,7 +111,7 @@ export function Sidebar({ activeItem = 'Atendimento', onNavigate, appSettings, o
                 href={shortcut.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center justify-between px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white rounded-sm transition-colors"
+                className="group flex items-center justify-between px-3 py-2 text-xs text-slate-400 hover:bg-slate-800 hover:text-white rounded-sm transition-colors"
               >
                 <div className="flex items-center gap-2 truncate">
                   <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-50" />

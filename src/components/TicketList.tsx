@@ -1,5 +1,5 @@
 import { Eye, Edit, Trash2, Search as SearchIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { isToday, isThisWeek, isThisMonth } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Ticket, AppSettings } from '@/types';
@@ -132,6 +132,48 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
     return `${m}:${s}`;
   };
 
+  const shortRecommendation = useMemo(() => {
+    if (finishedFilteredTickets.length === 0) return null;
+    
+    const otima = appSettings.sla.otima * 60;
+    const boa = appSettings.sla.boa * 60;
+    const atencao = appSettings.sla.atencao * 60;
+    const ruim = appSettings.sla.ruim * 60;
+
+    let targetSlaSecs = otima;
+    let targetName = 'Ótima';
+
+    if (avgSeconds <= otima) {
+      return null;
+    } else if (avgSeconds <= boa) {
+      targetSlaSecs = otima;
+      targetName = 'Ótima';
+    } else if (avgSeconds <= atencao) {
+      targetSlaSecs = boa;
+      targetName = 'Boa';
+    } else if (avgSeconds <= ruim) {
+      targetSlaSecs = atencao;
+      targetName = 'Atenção';
+    } else {
+      targetSlaSecs = ruim;
+      targetName = 'Ruim';
+    }
+
+    const totalCurrentSecs = avgSeconds * finishedFilteredTickets.length;
+    const nextTicketsCount = 10;
+    const allowedTotalSecs = targetSlaSecs * (finishedFilteredTickets.length + nextTicketsCount);
+    const requiredSecsForNext = allowedTotalSecs - totalCurrentSecs;
+    const maxAvgSecsForNext = requiredSecsForNext / nextTicketsCount;
+
+    if (maxAvgSecsForNext <= 0) {
+      return `Foque em reduzir o tempo gradativamente nos próximos chamados.`;
+    } else {
+      const maxMins = Math.floor(maxAvgSecsForNext / 60);
+      const maxSecs = Math.floor(maxAvgSecsForNext % 60);
+      return `Próx ${nextTicketsCount} chamados em até ${maxMins}m${maxSecs}s para SLA ${targetName}.`;
+    }
+  }, [avgSeconds, finishedFilteredTickets.length, appSettings.sla]);
+
   return (
     <div className="space-y-8 mt-8">
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
@@ -139,6 +181,9 @@ export function TicketList({ tickets, appSettings, onDelete, onEdit, onUpdate }:
           <div>
             <h3 className="font-bold text-slate-800">Tempo de finalização de chamados</h3>
             <p className="text-xs text-slate-400 mt-1">{finishedFilteredTickets.length} chamado(s) finalizado(s) no período</p>
+            {shortRecommendation && (
+              <p className="text-[11px] font-medium text-blue-600 mt-2 bg-blue-50 px-2 py-1 rounded inline-block">💡 {shortRecommendation}</p>
+            )}
           </div>
           
           <div className="flex items-center gap-4">

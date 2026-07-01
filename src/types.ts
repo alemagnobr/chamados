@@ -28,6 +28,7 @@ export interface Ticket {
     email: string;
     id: string;
   };
+  deleted?: boolean;
 }
 
 export interface ActiveTicket extends Ticket {

@@ -7,6 +7,7 @@ import { SettingsPanel } from '@/components/SettingsPanel';
 import { FaqPanel } from '@/components/FaqPanel';
 import { ProcedurePanel } from '@/components/ProcedurePanel';
 import { InformationPanel } from '@/components/InformationPanel';
+import { SLADashboard } from '@/components/SLADashboard';
 import { Ticket, ActiveTicket, AppSettings } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -340,6 +341,22 @@ O texto é:
               ) : (
                 <SettingsPanel appSettings={appSettings} onUpdateSettings={handleUpdateSettings} />
               )}
+            </div>
+          </>
+        ) : activeSidebarItem === 'SLA' ? (
+          <>
+            <header className="bg-white border-b border-slate-200 shrink-0">
+              <div className="flex items-center justify-between px-8 h-20">
+                <div className="flex items-center gap-3">
+                  <Layout className="h-5 w-5 text-slate-400" />
+                  <h2 className="text-lg font-semibold text-slate-900">Dashboard de SLA</h2>
+                </div>
+              </div>
+            </header>
+            <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
+              <div className="max-w-6xl mx-auto">
+                <SLADashboard tickets={tickets} appSettings={appSettings} />
+              </div>
             </div>
           </>
         ) : activeSidebarItem === 'FAQs' ? (

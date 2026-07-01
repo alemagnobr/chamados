@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, useEffect } from 'react';
+import React, { useState, ChangeEvent, useEffect } from 'react';
 import { Plus, X, Edit2, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { AppSettings } from '@/types';
 
